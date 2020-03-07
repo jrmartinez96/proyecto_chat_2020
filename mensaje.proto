@@ -1,0 +1,100 @@
+syntax = "proto2";
+  
+package chat;
+
+
+// MI INFO 
+message MiInfoRequest 
+{
+  required string username = 1;
+  required string ip = 2;
+}
+
+
+// BROADCAST
+message BroadcastRequest
+{
+  required string message = 1;
+}
+
+message BroadcastResponse
+{
+  required string message = 1;
+  required string fromUsername = 2;
+}
+
+
+// CAMBIO ESTADO
+message CambioEstadoRequest {
+  required string nuevoEstado = 1;
+}
+
+
+// USUARIOS CONECTADOS
+message UsuarioConectado {
+  required string username = 1;
+  required string estado = 2;
+  required string id = 3;
+  required string ip = 4;
+}
+
+message UsuariosConectadosResponse {
+ repeated UsuarioConectado usuariosConectados = 1;
+}
+
+
+// INFO USUARIO
+message SolicitarInfoUsuarioRequest {
+  required string userId = 1;
+}
+
+message SolicitarInfoUsuarioResponse {
+  required UsuarioConectado usuarioConectado = 1;
+}
+
+
+// MENSAJE PRIVADO
+message MensajePrivadoRequest {
+  required string message = 1;
+  required string toUserIp = 2;
+}
+
+message MensajePrivadoResponse {
+  required string message = 1;
+  required string fromUsername = 2;
+  required string fromUserIp = 3;
+}
+
+
+// ERROR GENERALIZADO
+message ErrorResponse {
+  required string message = 1;
+}
+
+
+// OPTIONS = 0: Mi info, 1: broadcast, 2: privado, 3: cambiar estado, 4: Solicitar usuarios conectados, 
+// 5: Solicitar informacion de usuario, 6: Cerrar sesion, -1: ERROR
+message Mensaje
+{
+  required string option = 1;
+
+  optional MiInfoRequest miInfoReq = 2;
+
+  optional BroadcastRequest broadcastRequest = 3;
+
+  optional BroadcastResponse broadcastResponse = 4;
+
+  optional CambioEstadoRequest cambioEstadoRequest = 5;
+
+  optional UsuariosConectadosResponse usuariosConectadosResponse = 6;
+
+  optional SolicitarInfoUsuarioRequest solicitarInfoUsuarioRequest = 7;
+
+  optional SolicitarInfoUsuarioResponse solicitarInfoUsuarioResponse = 8;
+
+  optional MensajePrivadoRequest mensajePrivadoRequest = 9;
+
+  optional MensajePrivadoResponse mensajePrivadoResponse = 10;
+
+  optional ErrorResponse errorResponse = 11;
+}
