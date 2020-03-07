@@ -46,7 +46,7 @@ void *readThread(void *args);
 
 // GLOBAL VARIABLES
 list<Client> clientsList;
-ActiveConnection connectedClients[MAX_CONNECTED_CLIENTS]; // El valor del array es el socket id
+ActiveConnection connectedClients[MAX_CONNECTED_CLIENTS]; // El valor de cada posicion es ActiveConnection que contiene la ip y el socket id, y el index de la lista de usuarios que se han conectado
 bool keepRunning;
 
 int main(int argc, char const *argv[]) 
@@ -98,36 +98,12 @@ int main(int argc, char const *argv[])
 	
 	while(keepRunning)
 	{
-
 	}
-    
-	// bool keepRunning = true;
-
-	// while(keepRunning)
-	// {
-
-	// 	valread = read( new_socket , buffer, 8192);
-	// 	string ret(buffer, 8192);
-
-	// 	Mensaje m2;
-	// 	m2.ParseFromString(ret);
-
-	// 	string username = m2.miinforeq().username();
-
-	// cout << "Option: " << m2.option() << endl;
-	// 	cout << "Mensaje: " << m2.miinforeq().username() << endl;
-	// 	out << "ip: " << m2.miinforeq().ip() << endl;
-
-	// 	if(username == "close")
-	// 	{
-	// 		keepRunning = false;
-	// 	}
-	// }
-
 
 	// send(new_socket , hello , strlen(hello) , 0 ); 
 	//printf("Hello message sent\n");
 	listenThread.detach();
+	waitRunningThread.detach();
     close(server_fd);
 
 	google::protobuf::ShutdownProtobufLibrary();
@@ -178,7 +154,7 @@ void listenConnections(int serverSock)
 		char ipStr[INET_ADDRSTRLEN];
 		inet_ntop( AF_INET, &ipAddr, ipStr, INET_ADDRSTRLEN );
 
-		cout << ipStr << endl;
+		cout << "CONNETION WITH: " << ipStr << endl;
 
 		if ((indexEmptyConnected = freeConnectedIndex())>-1)
 		{
