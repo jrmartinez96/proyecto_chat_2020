@@ -1,7 +1,10 @@
-compilacion
+# PROYECTO CHAT
 
-g++ client.cpp mensaje.pb.cc -lprotobuf -pthread -o client
+# Compilacion de proto
+`protoc -I=. --cpp_out=. mensaje.proto`
 
-g++ server.cpp mensaje.pb.cc -lprotobuf -pthread -o server
+# Compilacion de cliente y servidor
 
-protoc -I=. --cpp_out=. mensaje.proto
+`g++ client.cpp mensaje.pb.cc -lprotobuf -pthread -o client`
+
+`g++ server.cpp mensaje.pb.cc -lprotobuf -pthread -o server`
