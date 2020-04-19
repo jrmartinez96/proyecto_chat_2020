@@ -16,6 +16,16 @@
 using namespace std;
 using namespace chat;
 
+// CLASES
+class UserConnected
+{
+	public:
+		string username;
+		string status;
+		int userId;
+		string ip;
+};
+
 // VARIABLES
 bool exitProgram;
 bool synAck;
@@ -41,6 +51,7 @@ int pantalla = 1; // Dice en que pantalla se encuentra el usuario
 list<string> broadcastMessages;
 list<string> notificacionesArray;
 map<int, list<string>> directMessages;
+list<UserConnected> usersConnected;
 
 //	IS SOCKET CLOSED
 bool isSockClosed(int sock);
@@ -433,7 +444,7 @@ void readText(int sock, WINDOW *mainWin, WINDOW *inputWin, WINDOW *notificationW
 
 		switch (opcion)
 		{
-			case 1:
+			case 1: // BROADCAST RESPONSE
 				{
 					broadcastMessages.push_back(m.broadcast().message());
 
@@ -459,7 +470,7 @@ void readText(int sock, WINDOW *mainWin, WINDOW *inputWin, WINDOW *notificationW
 					break;
 				}
 			
-			case 2:
+			case 2: // DIRECT MESSAGE RESPONSE
 				{
 					int userId = m.message().userid();
 					string message = m.message().message();
@@ -494,11 +505,96 @@ void readText(int sock, WINDOW *mainWin, WINDOW *inputWin, WINDOW *notificationW
 					
 				}
 
-			case 3:
+			case 3: // ERROR RESPONSE
 				{
 					string mensaje = m.error().errormessage();
 					notificacionesArray.push_back("SERVER ERROR - " + mensaje);
 					printNotifications(notificationWin);
+					break;
+				}
+			
+			case 4: // MY INFO RESPONSE
+				{
+					int userId = m.myinforesponse().userid();
+					notificacionesArray.push_back("SERVER RESPONSE - MyInfo userId: " + to_string(userId));
+					printNotifications(notificationWin);
+					break;
+				}
+
+			case 5: // CONNECTED USER RESPONSE
+				{
+					usersConnected.clear();	
+					for(int i = 0; i < m.connecteduserresponse().connectedusers_size(); i++)
+					{
+						string username = m.connecteduserresponse().connectedusers(i).username();
+						string ip = "";
+						string status = "";
+						int userId = -1;
+
+						if(m.connecteduserresponse().connectedusers(i).has_ip())
+						{
+							ip = m.connecteduserresponse().connectedusers(i).ip();
+						}
+
+						if(m.connecteduserresponse().connectedusers(i).has_status())
+						{
+							status = m.connecteduserresponse().connectedusers(i).status();
+						}
+
+						if(m.connecteduserresponse().connectedusers(i).has_userid())
+						{
+							userId = m.connecteduserresponse().connectedusers(i).userid();
+						}
+
+						UserConnected user;
+						user.username = username;
+						user.ip = ip;
+						user.status = status;
+						user.userId = userId;
+
+						usersConnected.push_back(user);						
+					}
+
+					if(pantalla == 3 || pantalla == 6 || pantalla == 7)
+						{
+							renderMainWindow(mainWin);
+						}
+						else
+						{
+							notificacionesArray.push_back("USERS CONNECTED - Lista actualizada.");
+							printNotifications(notificationWin);
+						}
+
+					break;
+				}
+
+			case 6: // CHANGE STATUS RESPOSE
+				{
+					int userId = m.changestatusresponse().userid();
+					string status = m.changestatusresponse().status();
+
+					notificacionesArray.push_back("Status cambia a " + status + " para usuario con id" + to_string(userId));
+					printNotifications(notificationWin);
+					break;
+				}
+
+			case 7: // BROADCAST RESPONSE
+				{
+					string status = m.broadcastresponse().messagestatus();
+
+					notificacionesArray.push_back("BROADCAST RESPONSE - " + status);
+					printNotifications(notificationWin);
+
+					break;
+				}
+
+			case 8: // DIRECT MESSAGE RESPONSE
+				{
+					string status = m.directmessageresponse().messagestatus();
+
+					notificacionesArray.push_back("DM RESPONSE - " + status);
+					printNotifications(notificationWin);
+
 					break;
 				}
 			
