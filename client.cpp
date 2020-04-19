@@ -10,6 +10,7 @@
 #include <thread>
 #include <curses.h>
 #include <list>
+#include <map>
 #include "mensaje.pb.h"
 #define PORT 8080
 using namespace std;
@@ -21,6 +22,8 @@ bool synAck;
 int userId;
 thread readThread;
 thread inputThread;
+string ERROR_STRING = "ERROR - INGRESA UNA DE LAS OPCIONES.";
+string ERROR_BACK_STRING = "ADVERTENCIA - Escribe 'back' para regresar.";
 
 int pantalla = 1; // Dice en que pantalla se encuentra el usuario
 /*
@@ -35,8 +38,9 @@ int pantalla = 1; // Dice en que pantalla se encuentra el usuario
         8: Informacion de usuarios - Informacion de usuario seleccionado
         9: Ayuda
     */
-list<char *> broadcastMessages;
-list<char *> notificacionesArray;
+list<string> broadcastMessages;
+list<string> notificacionesArray;
+map<int, list<string>> directMessages;
 
 //	IS SOCKET CLOSED
 bool isSockClosed(int sock);
@@ -191,7 +195,7 @@ void writeText(int sock, WINDOW *mainWin, WINDOW *inputWin, WINDOW *notification
 			catch (const std::exception& e)
 			{
 				noHayError = false;
-				notificacionesArray.push_back("ERROR - Ingresa una de las opciones.");
+				notificacionesArray.push_back(ERROR_STRING);
 				printNotifications(notificationWin);
 			}
 
@@ -230,12 +234,12 @@ void writeText(int sock, WINDOW *mainWin, WINDOW *inputWin, WINDOW *notification
 						break;
 					
 					default:
-						notificacionesArray.push_back("ERROR - Ingresa una de las opciones.");
+						notificacionesArray.push_back(ERROR_STRING);
 						printNotifications(notificationWin);
 						break;
 					}
 				} else {
-					notificacionesArray.push_back("ERROR - Ingresa una de las opciones.");
+					notificacionesArray.push_back(ERROR_STRING);
 					printNotifications(notificationWin);
 				}
 			}
@@ -245,14 +249,166 @@ void writeText(int sock, WINDOW *mainWin, WINDOW *inputWin, WINDOW *notification
 		// PANTALLA BOADCASTING
 		else if (pantalla == 2)
 		{
-			BroadcastRequest *br(new BroadcastRequest);
-			br->set_message(str);
+			if(strcmp(str, "back") == 0)
+			{
+				pantalla = 1;
+				renderMainWindow(mainWin);
+			}
+			else
+			{	
+				BroadcastRequest *br(new BroadcastRequest);
+				br->set_message(str);
 
-			ClientMessage m;
-			m.set_option(4);
-			m.set_allocated_broadcast(br);
+				ClientMessage m;
+				m.set_option(4);
+				m.set_allocated_broadcast(br);
 
-			sendToServer(sock, m);
+				sendToServer(sock, m);
+			}
+			
+		}
+
+		// PANTALLA MENSAJE DIRECTO - LISTA USUARIOS
+		else if(pantalla == 3)
+		{
+			if(strcmp(str, "back") == 0)
+			{
+				pantalla = 1;
+				renderMainWindow(mainWin);
+			}
+			else
+			{
+
+			}
+		}
+
+		// PANTALLA MENSAJE DIRECTO - CHAT CON PERSONA SELECCIONADA
+		else if(pantalla == 4)
+		{
+			if(strcmp(str, "back") == 0)
+			{
+				pantalla = 1;
+				renderMainWindow(mainWin);
+			}
+			else
+			{
+				
+			}
+		}
+
+		// PANTALLA CAMBIO DE ESTADO
+		else if(pantalla == 5)
+		{
+			if(strcmp(str, "back") == 0)
+			{
+				pantalla = 1;
+				renderMainWindow(mainWin);
+			}
+			else
+			{
+				int opcion = 0;
+				bool noHayError = true;
+				try
+				{
+					opcion = atoi(str);
+				}
+				catch (const std::exception& e)
+				{
+					noHayError = false;
+					notificacionesArray.push_back(ERROR_STRING);
+					printNotifications(notificationWin);
+				}
+
+				if(noHayError)
+				{
+					if( 0 < opcion && opcion < 4)
+					{
+						ClientMessage m;
+						m.set_option(3);
+
+						ChangeStatusRequest *csr(new ChangeStatusRequest);
+						switch (opcion)
+						{
+						case 1:
+							csr->set_status("Conectado");
+							break;
+						case 2:
+							csr->set_status("Away");
+							break;
+						case 3:
+							csr->set_status("Ocupado");
+							break;
+						
+						default:
+							break;
+						}
+
+						m.set_allocated_changestatus(csr);
+
+						sendToServer(sock, m);
+					} else {
+						notificacionesArray.push_back(ERROR_STRING);
+						printNotifications(notificationWin);
+					}
+				}
+			}
+		}
+
+		// PANTALLA DE LISTA DE USUARIOS CONECTADOS
+		else if(pantalla == 6)
+		{
+			if(strcmp(str, "back") == 0)
+			{
+				pantalla = 1;
+				renderMainWindow(mainWin);
+			}
+			else
+			{
+				
+			}
+		}
+
+		// PANTALLA INFORMACION DE USUARIOS - LISTA DE USUARIOS
+		else if(pantalla == 7)
+		{
+			if(strcmp(str, "back") == 0)
+			{
+				pantalla = 1;
+				renderMainWindow(mainWin);
+			}
+			else
+			{
+				
+			}
+		}
+
+		// PANTALLA INFORMACION DE USUARIOS - INFORMACION DE USUARIOS CONECTADOS
+		else if(pantalla == 8)
+		{
+			if(strcmp(str, "back") == 0)
+			{
+				pantalla = 7;
+				renderMainWindow(mainWin);
+			}
+			else
+			{
+				
+			}
+		}
+
+		// PANTALLA DE AYUDA
+		else if(pantalla == 9)
+		{
+			if(strcmp(str, "back") == 0)
+			{
+				pantalla = 7;
+				renderMainWindow(mainWin);
+			}
+			else
+			{
+				notificacionesArray.push_back(ERROR_BACK_STRING);
+				printNotifications(notificationWin);
+			}
 		}
 		
 	}
@@ -270,12 +426,75 @@ void readText(int sock, WINDOW *mainWin, WINDOW *inputWin, WINDOW *notificationW
 
 		string ret(buffer, 8192);
 
-		ServerMessage m2;
-		m2.ParseFromString(ret);
+		ServerMessage m;
+		m.ParseFromString(ret);
 
-		cout << endl
-			 << "Mensaje Recibido!" << endl;
-		cout << "Option: " << m2.option() << endl;
+		int opcion = m.option();
+
+		switch (opcion)
+		{
+			case 1:
+				{
+					broadcastMessages.push_back(m.broadcast().message());
+
+					if(pantalla == 2)
+					{
+						renderMainWindow(mainWin);
+					}
+					else
+					{
+						if(m.broadcast().has_username())
+						{
+							notificacionesArray.push_back("BROADCAST - Nuevo mensaje.");
+						}
+						else
+						{
+							string str1 = "BROADCAST - Nuevo mensaje de ";
+							string username = m.broadcast().username();
+							notificacionesArray.push_back(str1 + username);
+						}
+						printNotifications(notificationWin);
+					}
+					
+					break;
+				}
+			
+			case 2:
+				{
+					int userId = m.message().userid();
+					string message = m.message().message();
+					string username = "";
+					if(m.message().has_username())
+					{
+						username = m.message().username();
+					}
+
+					directMessages[userId].push_back(message);
+
+					if(pantalla == 4)
+					{
+						renderMainWindow(mainWin);
+					}
+					else
+					{
+						if(m.message().has_username())
+						{
+							notificacionesArray.push_back("DM - Nuevo mensaje de " + username);
+						}
+						else
+						{
+							notificacionesArray.push_back("DM - Nuevo mensaje de usuario " + to_string(userId));
+						}
+
+						printNotifications(notificationWin);
+						
+					}
+					
+				}
+			
+			default:
+				break;
+		}
 	}
 	exitProgram = true;
 }
@@ -445,7 +664,15 @@ void printBroadcast(WINDOW *win)
     for(int i = listIndex; i < listBroadSize; i++)
     {
         wmove(win, cursorPositionY, 2);
-        waddstr(win, getMessage(broadcastMessages, i));
+
+		// GET NOTIFICATION FROM LIST
+		list<string>::iterator it = broadcastMessages.begin();
+    	advance(it, i);
+		string mensaje = *it;
+
+        char cstr[mensaje.size() + 1];
+		strcpy(cstr, mensaje.c_str());
+        waddstr(win, cstr);
         cursorPositionY++;
     }
 
@@ -533,7 +760,15 @@ void printNotifications(WINDOW *win)
     for(int i = listIndex; i < listNotificacionesSize; i++)
     {
         wmove(win, cursorPositionY, 2);
-        waddstr(win, getMessage(notificacionesArray, i));
+		// GET NOTIFICATION FROM LIST
+		list<string>::iterator it = notificacionesArray.begin();
+    	advance(it, i);
+		string mensaje = *it;
+
+
+		char cstr[mensaje.size() + 1];
+		strcpy(cstr, mensaje.c_str());
+        waddstr(win, cstr);
         cursorPositionY++;
     }
 
@@ -541,11 +776,9 @@ void printNotifications(WINDOW *win)
 }
 
 // --------------------------------------- FUNCIONES GENERALES --------------------------------------- //
-char* getMessage(list<char*> _list, int _i){
-    list<char*>::iterator it = _list.begin();
-    for(int i=0; i<_i; i++){
-        ++it;
-    }
+char* getMessage(list<char*> objectlist, int _i){
+    list<char*>::iterator it = objectlist.begin();
+    advance(it, _i);
     return *it;
 }
 
