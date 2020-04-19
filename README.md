@@ -5,6 +5,6 @@
 
 # Compilacion de cliente y servidor
 
-`g++ client.cpp mensaje.pb.cc -lprotobuf -pthread -o client`
+`g++ client.cpp mensaje.pb.cc -lprotobuf -pthread -lncurses -o client`
 
 `g++ server.cpp mensaje.pb.cc -lprotobuf -pthread -o server`
