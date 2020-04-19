@@ -489,7 +489,17 @@ void readText(int sock, WINDOW *mainWin, WINDOW *inputWin, WINDOW *notificationW
 						printNotifications(notificationWin);
 						
 					}
+
+					break;
 					
+				}
+
+			case 3:
+				{
+					string mensaje = m.error().errormessage();
+					notificacionesArray.push_back("SERVER ERROR - " + mensaje);
+					printNotifications(notificationWin);
+					break;
 				}
 			
 			default:
