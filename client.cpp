@@ -64,6 +64,7 @@ void printAyuda(WINDOW *win);
 
 // Funciones generales
 char *getMessage(list<char *> _list, int _i);
+void sendToServer(int sock, ClientMessage m);
 
 int main(int argc, char const *argv[])
 {
@@ -124,8 +125,7 @@ int main(int argc, char const *argv[])
 	inputThread.detach();
 
 	//cout << "\r\e[A" << flush;
-	cout << endl
-		 << "------> CLOSING SOCKET" << endl;
+	cout << endl << "------> CLOSING SOCKET" << endl;
 	close(sock);
 
 	google::protobuf::ShutdownProtobufLibrary();
@@ -178,6 +178,83 @@ void writeText(int sock, WINDOW *mainWin, WINDOW *inputWin, WINDOW *notification
 		wmove(inputWin, 1, 3);
 		waddstr(inputWin, "                                                  ");
 		wrefresh(inputWin);
+
+		// PANTALLA MENU
+		if(pantalla == 1)
+		{
+			int opcion = 0;
+			bool noHayError = true;
+			try
+			{
+				opcion = atoi(str);
+			}
+			catch (const std::exception& e)
+			{
+				noHayError = false;
+				notificacionesArray.push_back("ERROR - Ingresa una de las opciones.");
+				printNotifications(notificationWin);
+			}
+
+			if(noHayError)
+			{
+				if( 0 < opcion && opcion < 8)
+				{
+					switch (opcion)
+					{
+					case 1:
+						pantalla = 2;
+						renderMainWindow(mainWin);
+						break;
+					case 2:
+						pantalla = 3;
+						renderMainWindow(mainWin);
+						break;
+					case 3:
+						pantalla = 5;
+						renderMainWindow(mainWin);
+						break;
+					case 4:
+						pantalla = 6;
+						renderMainWindow(mainWin);
+						break;
+					case 5:
+						pantalla = 7;
+						renderMainWindow(mainWin);
+						break;
+					case 6:
+						pantalla = 9;
+						renderMainWindow(mainWin);
+						break;
+					case 7:
+						/* code */
+						break;
+					
+					default:
+						notificacionesArray.push_back("ERROR - Ingresa una de las opciones.");
+						printNotifications(notificationWin);
+						break;
+					}
+				} else {
+					notificacionesArray.push_back("ERROR - Ingresa una de las opciones.");
+					printNotifications(notificationWin);
+				}
+			}
+
+		}
+
+		// PANTALLA BOADCASTING
+		else if (pantalla == 2)
+		{
+			BroadcastRequest *br(new BroadcastRequest);
+			br->set_message(str);
+
+			ClientMessage m;
+			m.set_option(4);
+			m.set_allocated_broadcast(br);
+
+			sendToServer(sock, m);
+		}
+		
 	}
 	exitProgram = true;
 }
@@ -470,4 +547,13 @@ char* getMessage(list<char*> _list, int _i){
         ++it;
     }
     return *it;
+}
+
+void sendToServer(int sock, ClientMessage m)
+{
+	string binary;
+	m.SerializeToString(&binary);
+	char cstr[binary.size() + 1];
+	strcpy(cstr, binary.c_str());
+	send(sock , cstr , strlen(cstr) , 0 );
 }
