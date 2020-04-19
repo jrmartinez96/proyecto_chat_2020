@@ -1,100 +1,170 @@
 syntax = "proto2";
-  
+
 package chat;
 
 
-// MI INFO 
-message MiInfoRequest 
-{
+// ----- (REGISTRO DE USUARIOS) TCP 3-Way HandShake -----
+
+// MY INFO REQ. - SYNCHRONIZE
+// Sent from CLIENT
+message MyInfoSynchronize {
   required string username = 1;
-  required string ip = 2;
+  optional string ip = 2;
 }
 
-
-// BROADCAST
-message BroadcastRequest
-{
-  required string message = 1;
+// MY INFO RESP. - SYN/ACK
+// Received from SERVER
+message MyInfoResponse {
+  required int32 userId = 1;
 }
 
-message BroadcastResponse
-{
-  required string message = 1;
-  required string fromUsername = 2;
+// MY INFO ACK. - ACKNOWLEDGE
+// Sent from CLIENT
+message MyInfoAcknowledge {
+  required int32 userId = 1;
 }
+// ------------------------------------------------------
 
 
-// CAMBIO ESTADO
-message CambioEstadoRequest {
-  required string nuevoEstado = 1;
+// --------- LISTADO DE USUARIOS CONECTADOS e OBETENCION DE INFORMACION DE USUARIO ---------
+
+// Sent from CLIENT
+// IF userId 0 RETURN ALL CONNECTED USERS
+message connectedUserRequest {
+  optional int32 userId = 1;
+  optional string username = 2;
 }
-
 
 // USUARIOS CONECTADOS
-message UsuarioConectado {
+message ConnectedUser {
   required string username = 1;
-  required string estado = 2;
-  required string id = 3;
-  required string ip = 4;
+  optional string status = 2;
+  optional int32 userId = 3;
+  optional string ip = 4;
 }
 
-message UsuariosConectadosResponse {
- repeated UsuarioConectado usuariosConectados = 1;
+// Received from SERVER
+message ConnectedUserResponse {
+  repeated ConnectedUser connectedUsers = 1;
+}
+// ----------------------------------------------------------------------------------------
+
+
+// -------- CAMBIO DE STATUS --------
+
+// Sent from CLIENT
+message ChangeStatusRequest {
+  required string status = 1;
 }
 
-
-// INFO USUARIO
-message SolicitarInfoUsuarioRequest {
-  required string userId = 1;
+// Received from SERVER
+message ChangeStatusResponse {
+  required int32 userId = 1;
+  required string status = 2;
 }
-
-message SolicitarInfoUsuarioResponse {
-  required UsuarioConectado usuarioConectado = 1;
-}
+// ----------------------------------
 
 
-// MENSAJE PRIVADO
-message MensajePrivadoRequest {
+// ------------- BROADCAST -------------
+
+// Sent from CLIENT
+message BroadcastRequest {
   required string message = 1;
-  required string toUserIp = 2;
 }
 
-message MensajePrivadoResponse {
-  required string message = 1;
-  required string fromUsername = 2;
-  required string fromUserIp = 3;
+// Received from SERVER
+message BroadcastResponse {
+  required string messageStatus = 1;
 }
+
+// Received from SERVER to all CLIENTS
+message BroadcastMessage {
+  required string message = 1;
+  required int32 userId = 2;
+}
+// --------------------------------------
+
+
+// --------- MENSAJE DIRECTO ---------
+
+// Sent from CLIENT
+message DirectMessageRequest {
+  required string message = 1;
+  optional int32 userId = 2;
+  optional string username = 3;
+}
+
+// Received from SERVER
+message DirectMessageResponse {
+  required string messageStatus = 1;
+}
+
+// Received from SERVER (Only recipient)
+message DirectMessage {
+  required string message = 1;
+  required int32 userId = 2;
+}
+// -----------------------------------
 
 
 // ERROR GENERALIZADO
 message ErrorResponse {
-  required string message = 1;
+  required string errorMessage = 1;
 }
 
 
-// OPTIONS = 0: Mi info, 1: broadcast, 2: privado, 3: cambiar estado, 4: Solicitar usuarios conectados, 
-// 5: Solicitar informacion de usuario, 6: Cerrar sesion, -1: ERROR
-message Mensaje
-{
-  required string option = 1;
+// CLIENT MESSAGE OPTIONS
+// "option" helps the Server identify the type of message it is receiving and what to use to parse it
+// option 1: synchronize
+// option 2: connectedUsers
+// option 3: changeStatus
+// option 4: broadcast
+// option 5: directMessage
+// option 6: acknowledge
+message ClientMessage {
+  required int32 option = 1;
 
-  optional MiInfoRequest miInfoReq = 2;
+  optional int32 userId = 2;
 
-  optional BroadcastRequest broadcastRequest = 3;
+  optional MyInfoSynchronize synchronize = 3;
 
-  optional BroadcastResponse broadcastResponse = 4;
+  optional connectedUserRequest connectedUsers = 4;
 
-  optional CambioEstadoRequest cambioEstadoRequest = 5;
+  optional ChangeStatusRequest changeStatus = 5;
 
-  optional UsuariosConectadosResponse usuariosConectadosResponse = 6;
+  optional BroadcastRequest broadcast = 6;
 
-  optional SolicitarInfoUsuarioRequest solicitarInfoUsuarioRequest = 7;
+  optional DirectMessageRequest directMessage = 7;
 
-  optional SolicitarInfoUsuarioResponse solicitarInfoUsuarioResponse = 8;
+  optional MyInfoAcknowledge acknowledge = 8;
+}
 
-  optional MensajePrivadoRequest mensajePrivadoRequest = 9;
+// SERVER MESSAGE OPTIONS
+// "option" helps the Client identify the type of message it is receiving and what to use to parse it
+// option 1: broadcast
+// option 2: message
+// option 3: error
+// option 4: myInfoResponse
+// option 5: connectedUserResponse
+// option 6: changeStatusResponse
+// option 7: broadcastResponse (sent message status)
+// option 8: directMessageResponse (sent message status)
+message ServerMessage {
+  required int32 option = 1;
 
-  optional MensajePrivadoResponse mensajePrivadoResponse = 10;
+  optional BroadcastMessage broadcast = 2;
 
-  optional ErrorResponse errorResponse = 11;
+  optional DirectMessage message = 3;
+
+  optional ErrorResponse error = 4;
+
+  optional MyInfoResponse myInfoResponse = 5;
+
+  optional ConnectedUserResponse connectedUserResponse = 6;
+
+  optional ChangeStatusResponse changeStatusResponse = 7;
+
+  optional BroadcastResponse broadcastResponse = 8;
+
+  optional DirectMessageResponse directMessageResponse = 9;
 }

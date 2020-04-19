@@ -44,6 +44,8 @@ int freeConnectedIndex();
 
 void *readThread(void *args);
 
+void responseMessage(int clientSock, int userId, int option);
+
 // GLOBAL VARIABLES
 list<Client> clientsList;
 ActiveConnection connectedClients[MAX_CONNECTED_CLIENTS]; // El valor de cada posicion es ActiveConnection que contiene la ip y el socket id, y el index de la lista de usuarios que se han conectado
@@ -186,13 +188,26 @@ void *readThread(void *indexCon)
 		}
 		string ret(buffer, 8192);
 
-		Mensaje m2;
+        ClientMessage m2;
 		m2.ParseFromString(ret);
 
-		// TODO: LECTURA DE OPCIONES
-		cout << "Option: " << m2.option() << endl;
-		cout << "Mensaje: " << m2.miinforeq().username() << endl;
-		cout << "ip: " << m2.miinforeq().ip() << endl;
+		if (m2.option() == 1){
+		    // TODO: Pass attribute to function DIETER
+            cout << "New User: " << m2.synchronize().username() << endl;
+            thread respondingThread(
+                    responseMessage, clientConnection.sockId, indexConnection, m2.option());
+            respondingThread.detach();
+		}
+        else if (m2.option() == 6){
+            // TODO: Pass attribute to function DIETER
+            cout << "UserID: " << m2.acknowledge().userid() << endl;
+            thread respondingThread(
+                    responseMessage, clientConnection.sockId, indexConnection, m2.option());
+            respondingThread.detach();
+        }
+
+		// TODO: Program all other options DIETER
+        cout << "Message MOCK: " << m2.synchronize().username() << endl;
 	}
 
 	cout << "CLOSING CONNECTION WITH: " << clientConnection.ip << " indecon: " << indexConnection << endl;
@@ -201,6 +216,38 @@ void *readThread(void *indexCon)
 	pthread_detach(connectedClients[indexConnection].myReadThread);
 
 	return indexCon;
+}
+void responseMessage(int clientSock, int userId, int option)
+{
+    if (option == 1)
+    {
+        cout << "NEW HANDSHAKE REQUESTED" << endl;
+
+        // Configuring SYN/ACK Protobuf Message
+        ServerMessage m;
+        m.set_option(4);
+        MyInfoResponse* myInfoResponse(new MyInfoResponse);
+        myInfoResponse->set_userid(userId);
+        m.set_allocated_myinforesponse(myInfoResponse);
+
+        // Message Serialization
+        string binary;
+        m.SerializeToString(&binary);
+
+        // Conversion to a buffer of char
+        char wBuffer[binary.size() + 1];
+        strcpy(wBuffer, binary.c_str());
+
+        // Send SYN/ACK to client
+        send(clientSock , wBuffer , strlen(wBuffer) , 0 );
+        cout << "SYN/ACK sent to Client" << endl;
+    }
+    else if (option == 6)
+    {
+        // TODO: Program the UserList with Username and Status Here DIETER
+        cout << "Acknowledge received from Client" << endl;
+        cout << "HANDSHAKE COMPLETED" << endl;
+    }
 }
 
 // LOOK FOR AN EMPTY SPACE IN THE CONNECTED CLIENTS ARRAY, IT IS EMPTY IF THE ID IS -1
