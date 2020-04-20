@@ -78,6 +78,7 @@ void printMainMenu(WINDOW *win);
 void printInicio(WINDOW *win);
 void printBroadcast(WINDOW *win);
 void printMensajeDirectoLista(WINDOW *win);
+void printMensajeDirectoChat(WINDOW *win);
 void printChangeStatus(WINDOW *win);
 void printUsuariosConectados(WINDOW *win);
 void printInfoUsuariosLista(WINDOW *win);
@@ -564,6 +565,15 @@ void writeText(int sock, WINDOW *mainWin, WINDOW *inputWin, WINDOW *notification
 			{
 				pantalla = 7;
 				renderMainWindow(mainWin);
+				connectedUserRequest *cur(new connectedUserRequest);
+				cur->set_username(username);
+				cur->set_userid(userId);
+
+				ClientMessage m;
+				m.set_option(2);
+				m.set_allocated_connectedusers(cur);
+
+				sendToServer(sock, m);
 			}
 			else
 			{
@@ -664,9 +674,9 @@ void readText(int sock, WINDOW *mainWin, WINDOW *inputWin, WINDOW *notificationW
 						username = m.message().username();
 					}
 
-					directMessages[userId].push_back(message);
+					directMessages[userId].push_back(username + ": " + message);
 
-					if(pantalla == 4)
+					if(pantalla == 4 && userId == userIdDM)
 					{
 						renderMainWindow(mainWin);
 					}
@@ -883,6 +893,10 @@ void renderMainWindow(WINDOW *win)
 
 	case 3:
 		printMensajeDirectoLista(win);
+		break;
+
+	case 4:
+		printMensajeDirectoChat(win);
 		break;
 
     case 5:
