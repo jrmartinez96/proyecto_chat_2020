@@ -243,7 +243,7 @@ void writeText(int sock, WINDOW *mainWin, WINDOW *inputWin, WINDOW *notification
 							renderMainWindow(mainWin);
 							connectedUserRequest *cur(new connectedUserRequest);
 							cur->set_username(username);
-							cur->set_userid(userId);
+							cur->set_userid(0);
 
 							ClientMessage m;
 							m.set_option(2);
@@ -264,7 +264,7 @@ void writeText(int sock, WINDOW *mainWin, WINDOW *inputWin, WINDOW *notification
 							renderMainWindow(mainWin);
 							connectedUserRequest *cur(new connectedUserRequest);
 							cur->set_username(username);
-							cur->set_userid(userId);
+							cur->set_userid(0);
 
 							ClientMessage m;
 							m.set_option(2);
@@ -279,7 +279,7 @@ void writeText(int sock, WINDOW *mainWin, WINDOW *inputWin, WINDOW *notification
 							renderMainWindow(mainWin);
 							connectedUserRequest *cur(new connectedUserRequest);
 							cur->set_username(username);
-							cur->set_userid(userId);
+							cur->set_userid(0);
 
 							ClientMessage m;
 							m.set_option(2);
@@ -569,7 +569,7 @@ void writeText(int sock, WINDOW *mainWin, WINDOW *inputWin, WINDOW *notification
 				renderMainWindow(mainWin);
 				connectedUserRequest *cur(new connectedUserRequest);
 				cur->set_username(username);
-				cur->set_userid(userId);
+				cur->set_userid(0);
 
 				ClientMessage m;
 				m.set_option(2);
