@@ -275,7 +275,7 @@ void responseMessage(int indexConn, ClientMessage message, ActiveConnection attr
 
         //ConnectedUserResponse connectedUserResponse;
 
-        if (message.connectedusers().userid() == 0)
+        if (message.connectedusers().userid() == 0 || !message.connectedusers().has_username())
         {
             cout << "Complete list requested" << endl;
 

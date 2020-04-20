@@ -193,7 +193,6 @@ interrupted:
 // THREAD FUNCTIONS
 void writeText(int sock, WINDOW *mainWin, WINDOW *inputWin, WINDOW *notificationWin)
 {
-	ClientMessage m;
 	bool exitLoop = false;
 	box(inputWin, 0, 0);
 	waddstr(inputWin, "Input");
@@ -242,7 +241,6 @@ void writeText(int sock, WINDOW *mainWin, WINDOW *inputWin, WINDOW *notification
 							pantalla = 3;
 							renderMainWindow(mainWin);
 							connectedUserRequest *cur(new connectedUserRequest);
-							cur->set_username(username);
 							cur->set_userid(0);
 
 							ClientMessage m;
@@ -263,7 +261,6 @@ void writeText(int sock, WINDOW *mainWin, WINDOW *inputWin, WINDOW *notification
 							pantalla = 6;
 							renderMainWindow(mainWin);
 							connectedUserRequest *cur(new connectedUserRequest);
-							cur->set_username(username);
 							cur->set_userid(0);
 
 							ClientMessage m;
@@ -278,7 +275,6 @@ void writeText(int sock, WINDOW *mainWin, WINDOW *inputWin, WINDOW *notification
 							pantalla = 7;
 							renderMainWindow(mainWin);
 							connectedUserRequest *cur(new connectedUserRequest);
-							cur->set_username(username);
 							cur->set_userid(0);
 
 							ClientMessage m;
@@ -568,7 +564,6 @@ void writeText(int sock, WINDOW *mainWin, WINDOW *inputWin, WINDOW *notification
 				pantalla = 7;
 				renderMainWindow(mainWin);
 				connectedUserRequest *cur(new connectedUserRequest);
-				cur->set_username(username);
 				cur->set_userid(0);
 
 				ClientMessage m;
