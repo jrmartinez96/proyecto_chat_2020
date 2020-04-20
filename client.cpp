@@ -30,6 +30,9 @@ class UserConnected
 bool exitProgram;
 bool synAck;
 int userId;
+string username;
+int userIdDM;
+int userIdInfo;
 thread readThread;
 thread inputThread;
 string ERROR_STRING = "ERROR - INGRESA UNA DE LAS OPCIONES.";
@@ -74,17 +77,30 @@ void renderMainWindow(WINDOW *win);
 void printMainMenu(WINDOW *win);
 void printInicio(WINDOW *win);
 void printBroadcast(WINDOW *win);
+void printMensajeDirectoLista(WINDOW *win);
 void printChangeStatus(WINDOW *win);
+void printUsuariosConectados(WINDOW *win);
+void printInfoUsuariosLista(WINDOW *win);
+void printInfoUsuario(WINDOW *win);
 void printAyuda(WINDOW *win);
 
 // Funciones generales
 char *getMessage(list<char *> _list, int _i);
 void sendToServer(int sock, ClientMessage m);
+string getUsernameFromUserid(int userId);
 
 int main(int argc, char const *argv[])
 {
-	GOOGLE_PROTOBUF_VERIFY_VERSION;
+	UserConnected u;
+	u.username = "hola";
+	u.userId = 123;
+	u.status = "Connected";
+	u.ip = "123.45.67";
 
+	usersConnected.push_back(u);
+
+	GOOGLE_PROTOBUF_VERIFY_VERSION;
+	username = "Mochi";
 	exitProgram = false;
 	synAck = false;
 	userId = 0;
@@ -225,23 +241,56 @@ void writeText(int sock, WINDOW *mainWin, WINDOW *inputWin, WINDOW *notification
 						renderMainWindow(mainWin);
 						break;
 					case 3:
-						pantalla = 5;
-						renderMainWindow(mainWin);
-						break;
+						{
+							pantalla = 5;
+							renderMainWindow(mainWin);
+							connectedUserRequest *cur(new connectedUserRequest);
+							cur->set_username(username);
+							cur->set_userid(userId);
+
+							ClientMessage m;
+							m.set_option(2);
+							m.set_allocated_connectedusers(cur);
+
+							sendToServer(sock, m);
+							break;
+						}
 					case 4:
-						pantalla = 6;
-						renderMainWindow(mainWin);
-						break;
+						{
+							pantalla = 6;
+							renderMainWindow(mainWin);
+							connectedUserRequest *cur(new connectedUserRequest);
+							cur->set_username(username);
+							cur->set_userid(userId);
+
+							ClientMessage m;
+							m.set_option(2);
+							m.set_allocated_connectedusers(cur);
+
+							sendToServer(sock, m);
+							break;
+						}
 					case 5:
-						pantalla = 7;
-						renderMainWindow(mainWin);
-						break;
+						{
+							pantalla = 7;
+							renderMainWindow(mainWin);
+							connectedUserRequest *cur(new connectedUserRequest);
+							cur->set_username(username);
+							cur->set_userid(userId);
+
+							ClientMessage m;
+							m.set_option(2);
+							m.set_allocated_connectedusers(cur);
+
+							sendToServer(sock, m);
+							break;
+						}
 					case 6:
 						pantalla = 9;
 						renderMainWindow(mainWin);
 						break;
 					case 7:
-						/* code */
+						exitLoop = true;
 						break;
 					
 					default:
@@ -275,6 +324,10 @@ void writeText(int sock, WINDOW *mainWin, WINDOW *inputWin, WINDOW *notification
 				m.set_allocated_broadcast(br);
 
 				sendToServer(sock, m);
+
+				string message(str);
+				broadcastMessages.push_back("Yo: " + message);
+				renderMainWindow(mainWin);
 			}
 			
 		}
@@ -289,7 +342,46 @@ void writeText(int sock, WINDOW *mainWin, WINDOW *inputWin, WINDOW *notification
 			}
 			else
 			{
+				int opcion = 0;
+				bool noHayError = true;
+				try
+				{
+					opcion = atoi(str);
+				}
+				catch (const std::exception& e)
+				{
+					noHayError = false;
+					notificacionesArray.push_back("ERROR - Elija un id de usuario aceptable.");
+					printNotifications(notificationWin);
+				}
 
+				if(noHayError)
+				{
+					bool existeUsuario = false;
+					for(int i = 0; i < usersConnected.size(); i++)
+					{
+						list<UserConnected>::iterator it = usersConnected.begin();
+						advance(it, i);
+						UserConnected user = *it;
+						if(user.userId == opcion)
+						{
+							existeUsuario = true;
+						}
+					}
+
+					if(existeUsuario)
+					{
+						userIdDM = opcion;
+						pantalla = 4;
+						renderMainWindow(mainWin);
+					}
+					else
+					{
+						notificacionesArray.push_back("ERROR - Usuario no existe en lista.");
+						printNotifications(notificationWin);
+					}
+					
+				}
 			}
 		}
 
@@ -298,12 +390,41 @@ void writeText(int sock, WINDOW *mainWin, WINDOW *inputWin, WINDOW *notification
 		{
 			if(strcmp(str, "back") == 0)
 			{
-				pantalla = 1;
+				pantalla = 3;
 				renderMainWindow(mainWin);
 			}
 			else
 			{
+				string username = "";
+				try
+				{
+					username = getUsernameFromUserid(userIdDM);
+				}
+				catch(const std::exception& e)
+				{
+				}
 				
+				DirectMessageRequest *dmr(new DirectMessageRequest);
+				dmr->set_message(str);
+				dmr->set_userid(userIdDM);
+
+				char cstr[username.size() + 1];
+				strcpy(cstr, username.c_str());
+
+				if(strcmp(cstr, "") != 0)
+				{
+					dmr->set_username(username);
+				}
+
+				ClientMessage m;
+				m.set_option(5);
+				m.set_allocated_directmessage(dmr);
+
+				sendToServer(sock, m);
+
+				string message(str);
+				directMessages[userIdDM].push_back("Yo: " + message);
+				renderMainWindow(mainWin);
 			}
 		}
 
@@ -357,6 +478,9 @@ void writeText(int sock, WINDOW *mainWin, WINDOW *inputWin, WINDOW *notification
 						m.set_allocated_changestatus(csr);
 
 						sendToServer(sock, m);
+
+						pantalla = 1;
+						renderMainWindow(mainWin);
 					} else {
 						notificacionesArray.push_back(ERROR_STRING);
 						printNotifications(notificationWin);
@@ -375,7 +499,8 @@ void writeText(int sock, WINDOW *mainWin, WINDOW *inputWin, WINDOW *notification
 			}
 			else
 			{
-				
+				notificacionesArray.push_back(ERROR_BACK_STRING);
+				printNotifications(notificationWin);
 			}
 		}
 
@@ -389,7 +514,46 @@ void writeText(int sock, WINDOW *mainWin, WINDOW *inputWin, WINDOW *notification
 			}
 			else
 			{
-				
+				int opcion = 0;
+				bool noHayError = true;
+				try
+				{
+					opcion = atoi(str);
+				}
+				catch (const std::exception& e)
+				{
+					noHayError = false;
+					notificacionesArray.push_back("ERROR - Elija un id de usuario aceptable.");
+					printNotifications(notificationWin);
+				}
+
+				if(noHayError)
+				{
+					bool existeUsuario = false;
+					for(int i = 0; i < usersConnected.size(); i++)
+					{
+						list<UserConnected>::iterator it = usersConnected.begin();
+						advance(it, i);
+						UserConnected user = *it;
+						if(user.userId == opcion)
+						{
+							existeUsuario = true;
+						}
+					}
+
+					if(existeUsuario)
+					{
+						userIdInfo = opcion;
+						pantalla = 8;
+						renderMainWindow(mainWin);
+					}
+					else
+					{
+						notificacionesArray.push_back("ERROR - Usuario no existe en lista.");
+						printNotifications(notificationWin);
+					}
+					
+				}
 			}
 		}
 
@@ -403,7 +567,8 @@ void writeText(int sock, WINDOW *mainWin, WINDOW *inputWin, WINDOW *notification
 			}
 			else
 			{
-				
+				notificacionesArray.push_back(ERROR_BACK_STRING);
+				printNotifications(notificationWin);
 			}
 		}
 
@@ -412,7 +577,7 @@ void writeText(int sock, WINDOW *mainWin, WINDOW *inputWin, WINDOW *notification
 		{
 			if(strcmp(str, "back") == 0)
 			{
-				pantalla = 7;
+				pantalla = 1;
 				renderMainWindow(mainWin);
 			}
 			else
@@ -446,7 +611,26 @@ void readText(int sock, WINDOW *mainWin, WINDOW *inputWin, WINDOW *notificationW
 		{
 			case 1: // BROADCAST RESPONSE
 				{
-					broadcastMessages.push_back(m.broadcast().message());
+					string user = "";
+					try
+					{
+						user = getUsernameFromUserid(m.broadcast().userid());
+					}
+					catch(const exception& e)
+					{
+						if(m.broadcast().has_username())
+						{
+							user = m.broadcast().username();
+						}
+						else
+						{
+							user = to_string(m.broadcast().userid());
+						}
+						
+					}
+					
+					
+					broadcastMessages.push_back(user + ": " +m.broadcast().message());
 
 					if(pantalla == 2)
 					{
@@ -615,7 +799,7 @@ void handshake(int sock)
 	m.set_option(1);
 	MyInfoSynchronize *synchronize(new MyInfoSynchronize);
 	// TODO: Replace hardcoded username to a preset arg at runtime
-	synchronize->set_username("Mochi");
+	synchronize->set_username(username);
 	m.set_allocated_synchronize(synchronize);
 
 	// Message Serialization
@@ -697,8 +881,24 @@ void renderMainWindow(WINDOW *win)
         printBroadcast(win);
         break;
 
+	case 3:
+		printMensajeDirectoLista(win);
+		break;
+
     case 5:
         printChangeStatus(win);
+        break;
+	
+	case 6:
+        printUsuariosConectados(win);
+        break;
+
+	case 7:
+        printInfoUsuariosLista(win);
+        break;
+
+	case 8:
+        printInfoUsuario(win);
         break;
 
     case 9:
@@ -785,6 +985,90 @@ void printBroadcast(WINDOW *win)
     wrefresh(win);
 }
 
+void printMensajeDirectoLista(WINDOW *win)
+{
+	wclear(win);
+    box(win, 0, 0);
+    waddstr(win, "Mensaje directo - Lista");
+
+	int listUsersConnSize = usersConnected.size();
+	int listIndex = 0;
+	if(listUsersConnSize > 18)
+	{
+		listIndex = listUsersConnSize - 18;
+	}
+
+	int cursorPositionY = 1;
+
+    for(int i = listIndex; i < listUsersConnSize; i++)
+    {
+        wmove(win, cursorPositionY, 2);
+
+		// GET NOTIFICATION FROM LIST
+		list<UserConnected>::iterator it = usersConnected.begin();
+    	advance(it, i);
+		UserConnected user = *it;
+
+		string strShow = to_string(user.userId) + ") " + user.username + " - " + user.ip + " - " + user.status;
+
+        char cstr[strShow.size() + 1];
+		strcpy(cstr, strShow.c_str());
+        waddstr(win, cstr);
+        cursorPositionY++;
+    }
+
+    wrefresh(win);
+}
+
+void printMensajeDirectoChat(WINDOW *win)
+{
+	string username = "";
+	try
+	{
+		username = getUsernameFromUserid(userIdDM);
+	}
+	catch(const std::exception& e)
+	{
+	}
+	
+	string titulo = "Mensaje directo - " + username;
+
+	char cstr[titulo.size() + 1];
+	strcpy(cstr, titulo.c_str());
+
+	wclear(win);
+    box(win, 0, 0);
+    waddstr(win, cstr);
+
+	list<string> dms = directMessages[userIdDM];
+
+	int listDmsSize = dms.size();
+    int listIndex = 0;
+    if(listDmsSize > 18)
+    {
+        listIndex = listDmsSize - 18;
+    }
+
+    int cursorPositionY = 1;
+
+    for(int i = listIndex; i < listDmsSize; i++)
+    {
+        wmove(win, cursorPositionY, 2);
+		// GET NOTIFICATION FROM LIST
+		list<string>::iterator it = dms.begin();
+    	advance(it, i);
+		string mensaje = *it;
+
+
+		char cstr[mensaje.size() + 1];
+		strcpy(cstr, mensaje.c_str());
+        waddstr(win, cstr);
+        cursorPositionY++;
+    }
+
+    wrefresh(win);
+}
+
 void printChangeStatus(WINDOW *win)
 {
     wclear(win);
@@ -804,6 +1088,122 @@ void printChangeStatus(WINDOW *win)
     waddstr(win, "3) Ocupado");
 
     wrefresh(win);
+}
+
+void printUsuariosConectados(WINDOW *win)
+{
+	wclear(win);
+    box(win, 0, 0);
+    waddstr(win, "Usarios conectados");
+
+	int listUsersConnSize = usersConnected.size();
+	int listIndex = 0;
+	if(listUsersConnSize > 18)
+	{
+		listIndex = listUsersConnSize - 18;
+	}
+
+	int cursorPositionY = 1;
+
+    for(int i = listIndex; i < listUsersConnSize; i++)
+    {
+        wmove(win, cursorPositionY, 2);
+
+		// GET NOTIFICATION FROM LIST
+		list<UserConnected>::iterator it = usersConnected.begin();
+    	advance(it, i);
+		UserConnected user = *it;
+
+		string strShow = to_string(user.userId) + ") " + user.username + " - " + user.ip + " - " + user.status;
+
+        char cstr[strShow.size() + 1];
+		strcpy(cstr, strShow.c_str());
+        waddstr(win, cstr);
+        cursorPositionY++;
+    }
+
+    wrefresh(win);
+}
+
+void printInfoUsuariosLista(WINDOW *win)
+{
+	wclear(win);
+    box(win, 0, 0);
+    waddstr(win, "Usarios conectados");
+
+	int listUsersConnSize = usersConnected.size();
+	int listIndex = 0;
+	if(listUsersConnSize > 18)
+	{
+		listIndex = listUsersConnSize - 18;
+	}
+
+	int cursorPositionY = 1;
+
+    for(int i = listIndex; i < listUsersConnSize; i++)
+    {
+        wmove(win, cursorPositionY, 2);
+
+		// GET NOTIFICATION FROM LIST
+		list<UserConnected>::iterator it = usersConnected.begin();
+    	advance(it, i);
+		UserConnected user = *it;
+
+		string strShow = to_string(user.userId) + ") " + user.username;
+
+        char cstr[strShow.size() + 1];
+		strcpy(cstr, strShow.c_str());
+        waddstr(win, cstr);
+        cursorPositionY++;
+    }
+
+    wrefresh(win);
+}
+
+void printInfoUsuario(WINDOW *win)
+{
+	UserConnected user;
+	for(int i = 0; i < usersConnected.size(); i++)
+	{
+		list<UserConnected>::iterator it = usersConnected.begin();
+    	advance(it, i);
+		UserConnected possibleUser = *it;
+
+		if(possibleUser.userId == userIdInfo)
+		{
+			user = possibleUser;
+		}
+	}
+
+	wclear(win);
+    box(win, 0, 0);
+	waddstr(win, "Informacion de usuario");
+
+	string username = "Username: " + user.username;
+	char usernamec[username.size() + 1];
+	strcpy(usernamec, username.c_str());
+	wmove(win, 2, 2);
+	waddstr(win, usernamec);
+
+	string ip = "IP: " + user.ip;
+	char ipc[ip.size() + 1];
+	strcpy(ipc, ip.c_str());
+	wmove(win, 4, 2);
+	waddstr(win, ipc);
+
+	string status = "Status: " + user.status;
+	char statusc[status.size() + 1];
+	strcpy(statusc, status.c_str());
+	wmove(win, 6, 2);
+	waddstr(win, statusc);
+
+	string uid = "Status: " + to_string(user.userId);
+	char uidc[uid.size() + 1];
+	strcpy(uidc, uid.c_str());
+	wmove(win, 8, 2);
+	waddstr(win, uidc);
+
+	wrefresh(win);
 }
 
 void printAyuda(WINDOW *win)
@@ -895,4 +1295,22 @@ void sendToServer(int sock, ClientMessage m)
 	char cstr[binary.size() + 1];
 	strcpy(cstr, binary.c_str());
 	send(sock , cstr , strlen(cstr) , 0 );
+}
+
+string getUsernameFromUserid(int userId)
+{
+	string username = "";
+
+	list<UserConnected>::iterator it = usersConnected.begin();
+	for(int i = 0; i < usersConnected.size(); i++)
+	{
+		UserConnected user = *it;
+		if(user.userId == userId)
+		{
+			username = user.username;
+		}
+		advance(it, 1);
+	}
+
+	return username;
 }
