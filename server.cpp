@@ -28,8 +28,11 @@ class ActiveConnection
 {
 	public:
 		int sockId = -1;
-		char* ip;
-		int indexList = -1;
+		string ip;
+		int userIds = -1;
+		string userNames = "";
+		string userStatus = "ACTIVO";
+		bool acknowledged = false;
 		pthread_t myReadThread;
 };
 
@@ -44,16 +47,20 @@ int freeConnectedIndex();
 
 void *readThread(void *args);
 
-void responseMessage(int clientSock, int userId, int option);
+void responseMessage(int indexConn, ClientMessage message, ActiveConnection attributes);
+
+void sendingMessage(int indexConn, ClientMessage message, ActiveConnection attributes);
 
 // GLOBAL VARIABLES
 list<Client> clientsList;
 ActiveConnection connectedClients[MAX_CONNECTED_CLIENTS]; // El valor de cada posicion es ActiveConnection que contiene la ip y el socket id, y el index de la lista de usuarios que se han conectado
 bool keepRunning;
+bool isSync;
 
 int main(int argc, char const *argv[]) 
 {
 	keepRunning = true;
+	isSync = false;
 	// INITIALIZE SERVER
 	GOOGLE_PROTOBUF_VERIFY_VERSION;
 
@@ -162,6 +169,7 @@ void listenConnections(int serverSock)
 		{
 			connectedClients[indexEmptyConnected].sockId = new_socket;
 			connectedClients[indexEmptyConnected].ip = ipStr;
+            connectedClients[indexEmptyConnected].userIds = indexEmptyConnected;
 			pthread_create(&connectedClients[indexEmptyConnected].myReadThread, NULL, readThread, (void *)&indexEmptyConnected);
 		} else {
 			cout << "ALL CONNECTIONS ARE FULL, ";
@@ -191,37 +199,42 @@ void *readThread(void *indexCon)
         ClientMessage m2;
 		m2.ParseFromString(ret);
 
-		if (m2.option() == 1){
-		    // TODO: Pass attribute to function DIETER
-            cout << "New User: " << m2.synchronize().username() << endl;
+		int opt = m2.option();
+
+		if (1 <= opt <= 3 || opt == 6){
             thread respondingThread(
-                    responseMessage, clientConnection.sockId, indexConnection, m2.option());
+                    responseMessage, indexConnection, m2, clientConnection);
             respondingThread.detach();
 		}
-        else if (m2.option() == 6){
-            // TODO: Pass attribute to function DIETER
-            cout << "UserID: " << m2.acknowledge().userid() << endl;
-            thread respondingThread(
-                    responseMessage, clientConnection.sockId, indexConnection, m2.option());
-            respondingThread.detach();
+        else if (opt == 4 || opt == 5){
+            thread messageThread(
+                    sendingMessage, indexConnection, m2, clientConnection);
+            messageThread.detach();
         }
-
-		// TODO: Program all other options DIETER
-        cout << "Message MOCK: " << m2.synchronize().username() << endl;
 	}
 
 	cout << "CLOSING CONNECTION WITH: " << clientConnection.ip << " indecon: " << indexConnection << endl;
 	connectedClients[indexConnection].sockId = -1;
-	connectedClients[indexConnection].indexList = -1;
+	connectedClients[indexConnection].ip = "";
+	connectedClients[indexConnection].userIds = -1;
+	connectedClients[indexConnection].userNames = "";
+	connectedClients[indexConnection].userStatus = "ACTIVO";
+	connectedClients[indexConnection].acknowledged = false;
 	pthread_detach(connectedClients[indexConnection].myReadThread);
 
 	return indexCon;
 }
-void responseMessage(int clientSock, int userId, int option)
+void responseMessage(int indexConn, ClientMessage message, ActiveConnection attributes)
 {
-    if (option == 1)
+    if (message.option() == 1)
     {
         cout << "NEW HANDSHAKE REQUESTED" << endl;
+
+        int userId = 10 - indexConn;
+
+        // Associate the Username and UserId to the Connection Data
+        connectedClients[indexConn].userNames = message.synchronize().username();
+        connectedClients[indexConn].userIds = userId;
 
         // Configuring SYN/ACK Protobuf Message
         ServerMessage m;
@@ -239,15 +252,26 @@ void responseMessage(int clientSock, int userId, int option)
         strcpy(wBuffer, binary.c_str());
 
         // Send SYN/ACK to client
-        send(clientSock , wBuffer , strlen(wBuffer) , 0 );
+        send(attributes.sockId , wBuffer , strlen(wBuffer) , 0 );
         cout << "SYN/ACK sent to Client" << endl;
+
+        isSync = true;
     }
-    else if (option == 6)
+    else if (message.option() == 6 && isSync)
     {
-        // TODO: Program the UserList with Username and Status Here DIETER
+        connectedClients[indexConn].acknowledged = true;
         cout << "Acknowledge received from Client" << endl;
         cout << "HANDSHAKE COMPLETED" << endl;
     }
+    else if (message.option() == 2 && connectedClients[indexConn].acknowledged)
+    {
+        cout << "UsersList";
+    }
+}
+
+void sendingMessage(int userId, ClientMessage message, ActiveConnection attributes)
+{
+    cout << "Sending Messages";
 }
 
 // LOOK FOR AN EMPTY SPACE IN THE CONNECTED CLIENTS ARRAY, IT IS EMPTY IF THE ID IS -1
