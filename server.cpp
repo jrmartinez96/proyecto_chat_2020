@@ -51,6 +51,8 @@ void responseMessage(int indexConn, ClientMessage message, ActiveConnection attr
 
 void sendingMessage(int indexConn, ClientMessage message, ActiveConnection attributes);
 
+void sendUserListToAll();
+
 // GLOBAL VARIABLES
 list<Client> clientsList;
 ActiveConnection connectedClients[MAX_CONNECTED_CLIENTS]; // El valor de cada posicion es ActiveConnection que contiene la ip y el socket id, y el index de la lista de usuarios que se han conectado
@@ -262,6 +264,8 @@ void responseMessage(int indexConn, ClientMessage message, ActiveConnection attr
         connectedClients[indexConn].acknowledged = true;
         cout << "Acknowledge received from Client" << endl;
         cout << "HANDSHAKE COMPLETED" << endl;
+
+        sendUserListToAll();
     }
     else if (message.option() == 2 && connectedClients[indexConn].acknowledged)
     {
@@ -437,6 +441,43 @@ void sendingMessage(int indexConn, ClientMessage message2, ActiveConnection attr
         send(socketTo , wBuffer , strlen(wBuffer) , 0 );
 
         cout << "Direct Message sent to: " << message2.directmessage().userid() << endl;
+    }
+}
+
+void sendUserListToAll()
+{
+    ServerMessage m;
+    m.set_option(5);
+
+    ConnectedUserResponse* connectedUserResponse(new ConnectedUserResponse);
+
+    //ConnectedUserResponse connectedUserResponse;
+
+    for(int j = 0; j < MAX_CONNECTED_CLIENTS; j++) {
+        if(connectedClients[j].sockId != -1) {
+            ConnectedUser* ConnectedUser = connectedUserResponse->add_connectedusers();
+            ConnectedUser->set_username(connectedClients[j].userNames);
+            ConnectedUser->set_status(connectedClients[j].userStatus);
+            ConnectedUser->set_userid(connectedClients[j].userIds);
+            ConnectedUser->set_ip(connectedClients[j].ip);
+        }
+    }
+
+    m.set_allocated_connecteduserresponse(connectedUserResponse);
+
+    // Message Serialization
+    string binary;
+    m.SerializeToString(&binary);
+
+    // Conversion to a buffer of char
+    char wBuffer[binary.size() + 1];
+    strcpy(wBuffer, binary.c_str());
+
+    for(int j = 0; j < MAX_CONNECTED_CLIENTS; j++) {
+        if(connectedClients[j].sockId != -1) {
+            // Send Broadcast to all connected clients
+            send(connectedClients[j].sockId , wBuffer , strlen(wBuffer) , 0 );
+        }
     }
 }
 
