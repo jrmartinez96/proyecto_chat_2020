@@ -327,10 +327,6 @@ void writeText(int sock, WINDOW *mainWin, WINDOW *inputWin, WINDOW *notification
 				m.set_allocated_broadcast(br);
 
 				sendToServer(sock, m);
-
-				string message(str);
-				broadcastMessages.push_back("Yo: " + message);
-				renderMainWindow(mainWin);
 			}
 			
 		}
@@ -424,10 +420,6 @@ void writeText(int sock, WINDOW *mainWin, WINDOW *inputWin, WINDOW *notification
 				m.set_allocated_directmessage(dmr);
 
 				sendToServer(sock, m);
-
-				string message(str);
-				directMessages[userIdDM].push_back("Yo: " + message);
-				renderMainWindow(mainWin);
 			}
 		}
 
