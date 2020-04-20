@@ -369,6 +369,7 @@ void sendingMessage(int indexConn, ClientMessage message2, ActiveConnection attr
         BroadcastMessage* broadcast(new BroadcastMessage);
         broadcast->set_message(message2.broadcast().message());
         broadcast->set_userid(connectedClients[indexConn].userIds);
+        broadcast->set_username(connectedClients[indexConn].userNames);
         b.set_allocated_broadcast(broadcast);
 
         // Message Serialization
