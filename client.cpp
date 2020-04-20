@@ -419,6 +419,10 @@ void writeText(int sock, WINDOW *mainWin, WINDOW *inputWin, WINDOW *notification
 				m.set_option(5);
 				m.set_allocated_directmessage(dmr);
 
+				string message(str);
+				directMessages[userIdDM].push_back("Yo: " + message);
+				renderMainWindow(mainWin);
+
 				sendToServer(sock, m);
 			}
 		}
@@ -614,7 +618,7 @@ void readText(int sock, WINDOW *mainWin, WINDOW *inputWin, WINDOW *notificationW
 		{
 			case 1: // BROADCAST RESPONSE
 				{
-					string user = "";
+					string user = to_string(m.broadcast().userid());
 					try
 					{
 						user = getUsernameFromUserid(m.broadcast().userid());
@@ -661,11 +665,16 @@ void readText(int sock, WINDOW *mainWin, WINDOW *inputWin, WINDOW *notificationW
 				{
 					int userId = m.message().userid();
 					string message = m.message().message();
-					string username = "";
+					string username = to_string(userId);
 					if(m.message().has_username())
 					{
 						username = m.message().username();
 					}
+					else
+					{
+						username = getUsernameFromUserid(userId);
+					}
+					
 
 					directMessages[userId].push_back(username + ": " + message);
 
