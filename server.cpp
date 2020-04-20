@@ -339,9 +339,9 @@ void responseMessage(int indexConn, ClientMessage message, ActiveConnection attr
 void sendingMessage(int indexConn, ClientMessage message2, ActiveConnection attributes)
 {
     if (message2.option() == 4 && connectedClients[indexConn].acknowledged){
-        cout << "RECEIVED A BROADCAST REQUEST";
+        cout << "RECEIVED A BROADCAST REQUEST" << endl;
 
-        cout << "Responding with Broadcast message status";
+        cout << "Responding with Broadcast message status" << endl;
 
         // Configuring Broadcast Response Protobuf Message
         ServerMessage r;
@@ -361,8 +361,8 @@ void sendingMessage(int indexConn, ClientMessage message2, ActiveConnection attr
         // Send Broadcast Response to client
         send(attributes.sockId , wBuffer2 , strlen(wBuffer2) , 0 );
 
-        cout << "Response sent, Broadcasting...";
-
+        cout << "Response sent, Broadcasting..." << endl;
+        cout << "Message: " << message2.broadcast().message() << endl;
         // Configuring Broadcast Protobuf Message
         ServerMessage b;
         b.set_option(1);
@@ -380,19 +380,19 @@ void sendingMessage(int indexConn, ClientMessage message2, ActiveConnection attr
         strcpy(wBuffer, binary.c_str());
 
         for(int j = 0; j < MAX_CONNECTED_CLIENTS; j++) {
-            if(connectedClients[j].sockId == -1) {
+            if(connectedClients[j].sockId != -1) {
                 // Send Broadcast to all connected clients
                 send(connectedClients[j].sockId , wBuffer , strlen(wBuffer) , 0 );
             }
         }
 
-        cout << "Broadcast Set to all Users";
+        cout << "Broadcast Set to all Users" << endl;
     }
     else if (message2.option() == 5 && connectedClients[indexConn].acknowledged)
     {
-        cout << "RECEIVED A DIRECT MESSAGE REQUEST";
+        cout << "RECEIVED A DIRECT MESSAGE REQUEST" << endl;
 
-        cout << "Responding with Direct Message status";
+        cout << "Responding with Direct Message status" << endl;
 
         // Configuring DM Response Protobuf Message
         ServerMessage r;
@@ -412,7 +412,7 @@ void sendingMessage(int indexConn, ClientMessage message2, ActiveConnection attr
         // Send Broadcast Response to client
         send(attributes.sockId , wBuffer2 , strlen(wBuffer2) , 0 );
 
-        cout << "Response sent, Sending Message...";
+        cout << "Response sent, Sending Message..." << endl;
 
         // Configuring DM Protobuf Message
         ServerMessage b;
