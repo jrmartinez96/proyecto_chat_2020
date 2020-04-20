@@ -265,8 +265,70 @@ void responseMessage(int indexConn, ClientMessage message, ActiveConnection attr
     }
     else if (message.option() == 2 && connectedClients[indexConn].acknowledged)
     {
-        cout << message.connectedusers().userid();
-        cout << message.connectedusers().username();
+        cout << "A USER REQUIRED THE USER-LIST" << endl;
+
+        // Configuring SYN/ACK Protobuf Message
+        ServerMessage m;
+        m.set_option(5);
+
+        ConnectedUserResponse* connectedUserResponse(new ConnectedUserResponse);
+
+        //ConnectedUserResponse connectedUserResponse;
+
+        if (message.connectedusers().userid() == 0)
+        {
+            cout << "Complete list requested" << endl;
+
+            // Filling out the Repeated Message
+            for(int j = 0; j < MAX_CONNECTED_CLIENTS; j++) {
+                if(connectedClients[j].sockId != -1) {
+                    ConnectedUser* ConnectedUser = connectedUserResponse->add_connectedusers();
+                    ConnectedUser->set_username(connectedClients[j].userNames);
+                    ConnectedUser->set_status(connectedClients[j].userStatus);
+                    ConnectedUser->set_userid(connectedClients[j].userIds);
+                    ConnectedUser->set_ip(connectedClients[j].ip);
+                }
+            }
+
+            cout << "Complete UserList sent to Client" << endl;
+        }
+        else {
+            cout << "List Requested for User: " << message.connectedusers().userid() << endl;
+
+            if (0 < message.connectedusers().userid() < 10)
+            {
+                int index = 10 - message.connectedusers().userid();
+
+                ServerMessage m;
+                m.set_option(5);
+
+                ConnectedUserResponse* connectedUserResponse(new ConnectedUserResponse);
+                ConnectedUser* ConnectedUser = connectedUserResponse->add_connectedusers();
+                ConnectedUser->set_username(connectedClients[index].userNames);
+                ConnectedUser->set_status(connectedClients[index].userStatus);
+                ConnectedUser->set_userid(connectedClients[index].userIds);
+                ConnectedUser->set_ip(connectedClients[index].ip);
+            }
+
+            cout << "Partial UserList sent to Client" << endl;
+        }
+
+        m.set_allocated_connecteduserresponse(connectedUserResponse);
+
+        // Message Serialization
+        string binary;
+        m.SerializeToString(&binary);
+
+        // Conversion to a buffer of char
+        char wBuffer[binary.size() + 1];
+        strcpy(wBuffer, binary.c_str());
+
+        // Send Complete Users List to client
+        send(attributes.sockId , wBuffer , strlen(wBuffer) , 0 );
+    }
+    else if (message.option() == 3 && connectedClients[indexConn].acknowledged)
+    {
+        cout << "Change Status";
     }
 }
 
