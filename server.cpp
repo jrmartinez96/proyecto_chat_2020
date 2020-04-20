@@ -328,7 +328,11 @@ void responseMessage(int indexConn, ClientMessage message, ActiveConnection attr
     }
     else if (message.option() == 3 && connectedClients[indexConn].acknowledged)
     {
-        cout << "Change Status";
+        cout << "STATUS CHANGE REQUESTED FOR USER: " << attributes.userIds;
+
+        connectedClients[indexConn].userStatus = message.changestatus().status();
+
+        cout << "Status changed to " << message.changestatus().status();
     }
 }
 
