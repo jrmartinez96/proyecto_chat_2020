@@ -10,7 +10,8 @@
 #include <thread>
 #include <arpa/inet.h>
 #include <bits/stdc++.h>
-#define PORT 8080
+#include <sstream>
+// #define PORT 8080
 #define MAX_CONNECTED_CLIENTS 10
 using namespace std;
 using namespace chat;
@@ -61,6 +62,14 @@ bool isSync;
 
 int main(int argc, char const *argv[]) 
 {
+    stringstream strValue;
+	strValue << argv[1];
+
+	unsigned int puerto;
+	strValue >> puerto;
+
+	#define PORT puerto
+
 	keepRunning = true;
 	isSync = false;
 	// INITIALIZE SERVER
