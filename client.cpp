@@ -11,8 +11,9 @@
 #include <curses.h>
 #include <list>
 #include <map>
+#include <sstream>
 #include "mensaje.pb.h"
-#define PORT 8080
+// #define PORT 8080
 using namespace std;
 using namespace chat;
 
@@ -92,13 +93,17 @@ string getUsernameFromUserid(int userId);
 
 int main(int argc, char const *argv[])
 {
-	UserConnected u;
-	u.username = "hola";
-	u.userId = 123;
-	u.status = "Connected";
-	u.ip = "123.45.67";
+	string nombre = argv[1];
+	username = nombre;
+	const char * ipServ = argv[2];
 
-	usersConnected.push_back(u);
+	stringstream strValue;
+	strValue << argv[3];
+
+	unsigned int puerto;
+	strValue >> puerto;
+
+	#define PORT puerto
 
 	GOOGLE_PROTOBUF_VERIFY_VERSION;
 	username = "Mochi";
@@ -119,7 +124,7 @@ int main(int argc, char const *argv[])
 	serv_addr.sin_port = htons(PORT);
 
 	// Convert IPv4 and IPv6 addresses from text to binary form
-	if (inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr) <= 0)
+	if (inet_pton(AF_INET, ipServ, &serv_addr.sin_addr) <= 0)
 	{
 		printf("\nInvalid address/ Address not supported \n");
 		return -1;
