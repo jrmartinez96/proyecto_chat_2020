@@ -201,7 +201,7 @@ void *readThread(void *indexCon)
 
 		int opt = m2.option();
 
-		if (1 <= opt <= 3 || opt == 6){
+		if ((1 <= opt && opt <= 3) || opt == 6){
             thread respondingThread(
                     responseMessage, indexConnection, m2, clientConnection);
             respondingThread.detach();
@@ -295,7 +295,7 @@ void responseMessage(int indexConn, ClientMessage message, ActiveConnection attr
         else {
             cout << "List Requested for User: " << message.connectedusers().userid() << endl;
 
-            if (0 < message.connectedusers().userid() < 10)
+            if (0 < message.connectedusers().userid() && message.connectedusers().userid() < 10)
             {
                 int index = 10 - message.connectedusers().userid();
 
