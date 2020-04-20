@@ -106,7 +106,6 @@ int main(int argc, char const *argv[])
 	#define PORT puerto
 
 	GOOGLE_PROTOBUF_VERIFY_VERSION;
-	//username = "Mochi";
 	exitProgram = false;
 	synAck = false;
 	userId = 0;
