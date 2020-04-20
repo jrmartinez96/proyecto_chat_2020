@@ -198,6 +198,7 @@ void *readThread(void *indexCon)
 	ActiveConnection clientConnection = connectedClients[indexConnection];
 	int valread;
 	char buffer[8192];
+    
 	while(!isSockClosed(clientConnection.sockId))
 	{
 		if((valread = read( clientConnection.sockId , buffer, 8192)) < 0)
@@ -241,32 +242,72 @@ void responseMessage(int indexConn, ClientMessage message, ActiveConnection attr
     {
         cout << "NEW HANDSHAKE REQUESTED" << endl;
 
-        int userId = 10 - indexConn;
+        // Check if username already exists
+        bool userExists = false;
+        for(int i = 0; i < 10; i++)
+        {
+            if(connectedClients[i].sockId != -1)
+            {
+                if(connectedClients[i].userNames.compare(message.synchronize().username()) == 0)
+                {
+                    userExists = true;
+                }
+            }
+        }
 
-        // Associate the Username and UserId to the Connection Data
-        connectedClients[indexConn].userNames = message.synchronize().username();
-        connectedClients[indexConn].userIds = userId;
+        if(userExists)
+        {
+            cout << "USUARIO EXISTE" << endl;
+            ServerMessage sme;
+            sme.set_option(3);
 
-        // Configuring SYN/ACK Protobuf Message
-        ServerMessage m;
-        m.set_option(4);
-        MyInfoResponse* myInfoResponse(new MyInfoResponse);
-        myInfoResponse->set_userid(userId);
-        m.set_allocated_myinforesponse(myInfoResponse);
+            ErrorResponse *err(new ErrorResponse);
+            err->set_errormessage("USUARIO YA EXISTE");
 
-        // Message Serialization
-        string binary;
-        m.SerializeToString(&binary);
+            sme.set_allocated_error(err);
 
-        // Conversion to a buffer of char
-        char wBuffer[binary.size() + 1];
-        strcpy(wBuffer, binary.c_str());
+            // Message Serialization
+            string binary;
+            sme.SerializeToString(&binary);
 
-        // Send SYN/ACK to client
-        send(attributes.sockId , wBuffer , strlen(wBuffer) , 0 );
-        cout << "SYN/ACK sent to Client" << endl;
+            // Conversion to a buffer of char
+            char wBuffer[binary.size() + 1];
+            strcpy(wBuffer, binary.c_str());
 
-        isSync = true;
+            // Send SYN/ACK to client
+            send(attributes.sockId , wBuffer , strlen(wBuffer) , 0 );
+        }
+        else
+        {    
+            int userId = 10 - indexConn;
+
+            // Associate the Username and UserId to the Connection Data
+            connectedClients[indexConn].userNames = message.synchronize().username();
+            connectedClients[indexConn].userIds = userId;
+
+            // Configuring SYN/ACK Protobuf Message
+            ServerMessage m;
+            m.set_option(4);
+            MyInfoResponse* myInfoResponse(new MyInfoResponse);
+            myInfoResponse->set_userid(userId);
+            m.set_allocated_myinforesponse(myInfoResponse);
+
+            // Message Serialization
+            string binary;
+            m.SerializeToString(&binary);
+
+            // Conversion to a buffer of char
+            char wBuffer[binary.size() + 1];
+            strcpy(wBuffer, binary.c_str());
+
+            // Send SYN/ACK to client
+            send(attributes.sockId , wBuffer , strlen(wBuffer) , 0 );
+            cout << "SYN/ACK sent to Client" << endl;
+
+            isSync = true;
+        }
+        
+
     }
     else if (message.option() == 6 && isSync)
     {

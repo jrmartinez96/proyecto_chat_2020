@@ -139,26 +139,29 @@ int main(int argc, char const *argv[])
 
 	handshake(sock);
 
-	// INTERFAZ GRAFICA
-	// Crear ventanas
-	initscr();
-	keypad(stdscr, TRUE);
-	WINDOW *winMain = newwin(20, 120, 0, 0);
-	WINDOW *inputWindow = newwin(3, 120, 20, 0);
-	WINDOW *notificationsWindow = newwin(23, 60, 0, 122);
-
-	renderMainWindow(winMain);
-	printNotifications(notificationsWindow);
-
-	readThread = thread(readText, sock, winMain, inputWindow, notificationsWindow);
-	inputThread = thread(writeText, sock, winMain, inputWindow, notificationsWindow);
-
-	while (!exitProgram)
+	if(!exitProgram)
 	{
-	}
+		// INTERFAZ GRAFICA
+		// Crear ventanas
+		initscr();
+		keypad(stdscr, TRUE);
+		WINDOW *winMain = newwin(20, 120, 0, 0);
+		WINDOW *inputWindow = newwin(3, 120, 20, 0);
+		WINDOW *notificationsWindow = newwin(23, 60, 0, 122);
 
-	readThread.detach();
-	inputThread.detach();
+		renderMainWindow(winMain);
+		printNotifications(notificationsWindow);
+
+		readThread = thread(readText, sock, winMain, inputWindow, notificationsWindow);
+		inputThread = thread(writeText, sock, winMain, inputWindow, notificationsWindow);
+
+		while (!exitProgram)
+		{
+		}
+
+		readThread.detach();
+		inputThread.detach();
+	}
 
 	//cout << "\r\e[A" << flush;
 	cout << endl << "------> CLOSING SOCKET" << endl;
@@ -467,7 +470,7 @@ void writeText(int sock, WINDOW *mainWin, WINDOW *inputWin, WINDOW *notification
 							csr->set_status("INACTIVO");
 							break;
 						case 3:
-							csr->set_status("Ocupado");
+							csr->set_status("OCUPADO");
 							break;
 						
 						default:
@@ -755,11 +758,6 @@ void readText(int sock, WINDOW *mainWin, WINDOW *inputWin, WINDOW *notificationW
 					{
 						renderMainWindow(mainWin);
 					}
-					else
-					{
-						notificacionesArray.push_back("USERS CONNECTED - Lista actualizada.");
-						printNotifications(notificationWin);
-					}
 
 					break;
 				}
@@ -873,6 +871,12 @@ void handshake(int sock)
 			cout << "HANDSHAKE COMPLETED" << endl;
 
 			// Finish 3 Way Handshake
+			synAck = true;
+		}
+		else if (m2.option() == 3)
+		{
+			cout << m2.error().errormessage() << endl;
+			exitProgram = true;
 			synAck = true;
 		}
 	}
