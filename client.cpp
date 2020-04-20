@@ -238,12 +238,8 @@ void writeText(int sock, WINDOW *mainWin, WINDOW *inputWin, WINDOW *notification
 						renderMainWindow(mainWin);
 						break;
 					case 2:
-						pantalla = 3;
-						renderMainWindow(mainWin);
-						break;
-					case 3:
 						{
-							pantalla = 5;
+							pantalla = 3;
 							renderMainWindow(mainWin);
 							connectedUserRequest *cur(new connectedUserRequest);
 							cur->set_username(username);
@@ -254,6 +250,12 @@ void writeText(int sock, WINDOW *mainWin, WINDOW *inputWin, WINDOW *notification
 							m.set_allocated_connectedusers(cur);
 
 							sendToServer(sock, m);
+							break;
+						}
+					case 3:
+						{
+							pantalla = 5;
+							renderMainWindow(mainWin);
 							break;
 						}
 					case 4:
@@ -717,7 +719,7 @@ void readText(int sock, WINDOW *mainWin, WINDOW *inputWin, WINDOW *notificationW
 
 			case 5: // CONNECTED USER RESPONSE
 				{
-					usersConnected.clear();	
+					usersConnected.clear();
 					for(int i = 0; i < m.connecteduserresponse().connectedusers_size(); i++)
 					{
 						string username = m.connecteduserresponse().connectedusers(i).username();
@@ -750,14 +752,14 @@ void readText(int sock, WINDOW *mainWin, WINDOW *inputWin, WINDOW *notificationW
 					}
 
 					if(pantalla == 3 || pantalla == 6 || pantalla == 7)
-						{
-							renderMainWindow(mainWin);
-						}
-						else
-						{
-							notificacionesArray.push_back("USERS CONNECTED - Lista actualizada.");
-							printNotifications(notificationWin);
-						}
+					{
+						renderMainWindow(mainWin);
+					}
+					else
+					{
+						notificacionesArray.push_back("USERS CONNECTED - Lista actualizada.");
+						printNotifications(notificationWin);
+					}
 
 					break;
 				}
@@ -793,6 +795,8 @@ void readText(int sock, WINDOW *mainWin, WINDOW *inputWin, WINDOW *notificationW
 				}
 			
 			default:
+				notificacionesArray.push_back("MENSAJE SIN OPCION");
+				printNotifications(notificationWin);
 				break;
 		}
 	}
