@@ -328,17 +328,66 @@ void responseMessage(int indexConn, ClientMessage message, ActiveConnection attr
     }
     else if (message.option() == 3 && connectedClients[indexConn].acknowledged)
     {
-        cout << "STATUS CHANGE REQUESTED FOR USER: " << attributes.userIds;
+        cout << "STATUS CHANGE REQUESTED FOR USER: " << connectedClients[indexConn].userIds << endl;
 
         connectedClients[indexConn].userStatus = message.changestatus().status();
 
-        cout << "Status changed to " << message.changestatus().status();
+        cout << "Status changed to " << message.changestatus().status() << endl;
     }
 }
 
-void sendingMessage(int userId, ClientMessage message, ActiveConnection attributes)
+void sendingMessage(int indexConn, ClientMessage message, ActiveConnection attributes)
 {
-    cout << "Sending Messages";
+    if (message.option() == 4 && connectedClients[indexConn].acknowledged){
+        cout << "RECEIVED A BROADCAST REQUEST";
+
+        cout << "Responding with Broadcast message status";
+
+        // Configuring Broadcast Response Protobuf Message
+        ServerMessage r;
+        r.set_option(8);
+        BroadcastResponse* broadcastResponse(new BroadcastResponse);
+        broadcastResponse->set_messagestatus("Received! Broadcasting...");
+        r.set_allocated_broadcastresponse(broadcastResponse);
+
+        // Message Serialization
+        string binary2;
+        r.SerializeToString(&binary2);
+
+        // Conversion to a buffer of char
+        char wBuffer2[binary2.size() + 1];
+        strcpy(wBuffer2, binary2.c_str());
+
+        // Send Broadcast Response to client
+        send(attributes.sockId , wBuffer2 , strlen(wBuffer2) , 0 );
+
+        cout << "Response sent, Broadcasting...";
+
+        // Configuring Broadcast Protobuf Message
+        ServerMessage b;
+        b.set_option(1);
+        BroadcastMessage* broadcast(new BroadcastMessage);
+        broadcast->set_message(message.broadcast().message());
+        broadcast->set_userid(connectedClients[indexConn].userIds);
+        b.set_allocated_broadcast(broadcast);
+
+        // Message Serialization
+        string binary;
+        b.SerializeToString(&binary);
+
+        // Conversion to a buffer of char
+        char wBuffer[binary.size() + 1];
+        strcpy(wBuffer, binary.c_str());
+
+        for(int j = 0; j < MAX_CONNECTED_CLIENTS; j++) {
+            if(connectedClients[j].sockId == -1) {
+                // Send Broadcast to all connected clients
+                send(connectedClients[j].sockId , wBuffer , strlen(wBuffer) , 0 );
+            }
+        }
+
+        cout << "Broadcast Set to all Users";
+    }
 }
 
 // LOOK FOR AN EMPTY SPACE IN THE CONNECTED CLIENTS ARRAY, IT IS EMPTY IF THE ID IS -1

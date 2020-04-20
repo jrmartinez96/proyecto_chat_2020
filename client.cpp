@@ -106,7 +106,7 @@ int main(int argc, char const *argv[])
 	#define PORT puerto
 
 	GOOGLE_PROTOBUF_VERIFY_VERSION;
-	username = "Mochi";
+	//username = "Mochi";
 	exitProgram = false;
 	synAck = false;
 	userId = 0;
@@ -466,10 +466,10 @@ void writeText(int sock, WINDOW *mainWin, WINDOW *inputWin, WINDOW *notification
 						switch (opcion)
 						{
 						case 1:
-							csr->set_status("Conectado");
+							csr->set_status("ACTIVO");
 							break;
 						case 2:
-							csr->set_status("Away");
+							csr->set_status("INACTIVO");
 							break;
 						case 3:
 							csr->set_status("Ocupado");
@@ -1097,13 +1097,13 @@ void printChangeStatus(WINDOW *win)
     waddstr(win, "Seleccione una de las opciones:");
 
     wmove(win, 3, 2);
-    waddstr(win, "1) Conectado");
+    waddstr(win, "1) ACTIVO");
 
     wmove(win, 4, 2);
-    waddstr(win, "2) Lejos");
+    waddstr(win, "2) INACTIVO");
 
     wmove(win, 5, 2);
-    waddstr(win, "3) Ocupado");
+    waddstr(win, "3) OCUPADO");
 
     wrefresh(win);
 }
