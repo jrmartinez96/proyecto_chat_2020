@@ -336,16 +336,16 @@ void responseMessage(int indexConn, ClientMessage message, ActiveConnection attr
     }
 }
 
-void sendingMessage(int indexConn, ClientMessage message, ActiveConnection attributes)
+void sendingMessage(int indexConn, ClientMessage message2, ActiveConnection attributes)
 {
-    if (message.option() == 4 && connectedClients[indexConn].acknowledged){
+    if (message2.option() == 4 && connectedClients[indexConn].acknowledged){
         cout << "RECEIVED A BROADCAST REQUEST";
 
         cout << "Responding with Broadcast message status";
 
         // Configuring Broadcast Response Protobuf Message
         ServerMessage r;
-        r.set_option(8);
+        r.set_option(7);
         BroadcastResponse* broadcastResponse(new BroadcastResponse);
         broadcastResponse->set_messagestatus("Received! Broadcasting...");
         r.set_allocated_broadcastresponse(broadcastResponse);
@@ -367,7 +367,7 @@ void sendingMessage(int indexConn, ClientMessage message, ActiveConnection attri
         ServerMessage b;
         b.set_option(1);
         BroadcastMessage* broadcast(new BroadcastMessage);
-        broadcast->set_message(message.broadcast().message());
+        broadcast->set_message(message2.broadcast().message());
         broadcast->set_userid(connectedClients[indexConn].userIds);
         b.set_allocated_broadcast(broadcast);
 
@@ -387,6 +387,55 @@ void sendingMessage(int indexConn, ClientMessage message, ActiveConnection attri
         }
 
         cout << "Broadcast Set to all Users";
+    }
+    else if (message2.option() == 5 && connectedClients[indexConn].acknowledged)
+    {
+        cout << "RECEIVED A DIRECT MESSAGE REQUEST";
+
+        cout << "Responding with Direct Message status";
+
+        // Configuring DM Response Protobuf Message
+        ServerMessage r;
+        r.set_option(8);
+        DirectMessageResponse* directMessageResponse(new DirectMessageResponse);
+        directMessageResponse->set_messagestatus("Received! Sending Message...");
+        r.set_allocated_directmessageresponse(directMessageResponse);
+
+        // Message Serialization
+        string binary2;
+        r.SerializeToString(&binary2);
+
+        // Conversion to a buffer of char
+        char wBuffer2[binary2.size() + 1];
+        strcpy(wBuffer2, binary2.c_str());
+
+        // Send Broadcast Response to client
+        send(attributes.sockId , wBuffer2 , strlen(wBuffer2) , 0 );
+
+        cout << "Response sent, Sending Message...";
+
+        // Configuring DM Protobuf Message
+        ServerMessage b;
+        b.set_option(2);
+        DirectMessage* message(new DirectMessage);
+        message->set_message(message2.directmessage().message());
+        message->set_userid(connectedClients[indexConn].userIds);
+        b.set_allocated_message(message);
+
+        // Message Serialization
+        string binary;
+        b.SerializeToString(&binary);
+
+        // Conversion to a buffer of char
+        char wBuffer[binary.size() + 1];
+        strcpy(wBuffer, binary.c_str());
+
+        // Send DM to all connected clients
+        int userTo = 10 - message2.directmessage().userid();
+        int socketTo = connectedClients[userTo].sockId;
+        send(socketTo , wBuffer , strlen(wBuffer) , 0 );
+
+        cout << "Direct Message sent to: " << message2.directmessage().userid() << endl;
     }
 }
 
