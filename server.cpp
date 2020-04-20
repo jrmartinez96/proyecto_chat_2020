@@ -265,7 +265,8 @@ void responseMessage(int indexConn, ClientMessage message, ActiveConnection attr
     }
     else if (message.option() == 2 && connectedClients[indexConn].acknowledged)
     {
-        cout << "UsersList";
+        cout << message.connectedusers().userid();
+        cout << message.connectedusers().username();
     }
 }
 
