@@ -349,12 +349,12 @@ void responseMessage(int indexConn, ClientMessage message, ActiveConnection attr
         else {
             cout << "List Requested for User: " << message.connectedusers().userid() << endl;
 
+            ServerMessage m;
+            m.set_option(5);
+
             if (0 < message.connectedusers().userid() && message.connectedusers().userid() < 10)
             {
                 int index = 10 - message.connectedusers().userid();
-
-                ServerMessage m;
-                m.set_option(5);
 
                 ConnectedUserResponse* connectedUserResponse(new ConnectedUserResponse);
                 ConnectedUser* ConnectedUser = connectedUserResponse->add_connectedusers();
@@ -362,6 +362,19 @@ void responseMessage(int indexConn, ClientMessage message, ActiveConnection attr
                 ConnectedUser->set_status(connectedClients[index].userStatus);
                 ConnectedUser->set_userid(connectedClients[index].userIds);
                 ConnectedUser->set_ip(connectedClients[index].ip);
+            }
+            else
+            {
+                for(int j = 0; j < MAX_CONNECTED_CLIENTS; j++) {
+                    if(connectedClients[j].userNames == message.connectedusers().username()) {
+                        ConnectedUserResponse* connectedUserResponse(new ConnectedUserResponse);
+                        ConnectedUser* ConnectedUser = connectedUserResponse->add_connectedusers();
+                        ConnectedUser->set_username(connectedClients[j].userNames);
+                        ConnectedUser->set_status(connectedClients[j].userStatus);
+                        ConnectedUser->set_userid(connectedClients[j].userIds);
+                        ConnectedUser->set_ip(connectedClients[j].ip);
+                    }
+                }
             }
 
             cout << "Partial UserList sent to Client" << endl;
