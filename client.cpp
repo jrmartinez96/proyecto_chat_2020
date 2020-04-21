@@ -622,19 +622,18 @@ void readText(int sock, WINDOW *mainWin, WINDOW *inputWin, WINDOW *notificationW
 			case 1: // BROADCAST RESPONSE
 				{
 					string user = to_string(m.broadcast().userid());
-					try
+					if(m.broadcast().has_username())
 					{
-						user = getUsernameFromUserid(m.broadcast().userid());
+						user = m.broadcast().username();
 					}
-					catch(const exception& e)
+					else
 					{
-						if(m.broadcast().has_username())
+						try
 						{
-							user = m.broadcast().username();
+							user = getUsernameFromUserid(m.broadcast().userid());
 						}
-						else
+						catch(const std::exception& e)
 						{
-							user = to_string(m.broadcast().userid());
 						}
 						
 					}
@@ -730,20 +729,20 @@ void readText(int sock, WINDOW *mainWin, WINDOW *inputWin, WINDOW *notificationW
 						string status = "";
 						int userId = -1;
 
-						if(m.connecteduserresponse().connectedusers(i).has_ip())
+						ip = m.connecteduserresponse().connectedusers(i).ip();
+						status = m.connecteduserresponse().connectedusers(i).status();
+						userId = m.connecteduserresponse().connectedusers(i).userid();
+						/*if(m.connecteduserresponse().connectedusers(i).has_ip())
 						{
-							ip = m.connecteduserresponse().connectedusers(i).ip();
 						}
 
 						if(m.connecteduserresponse().connectedusers(i).has_status())
 						{
-							status = m.connecteduserresponse().connectedusers(i).status();
 						}
 
 						if(m.connecteduserresponse().connectedusers(i).has_userid())
 						{
-							userId = m.connecteduserresponse().connectedusers(i).userid();
-						}
+						}*/
 
 						UserConnected user;
 						user.username = username;
