@@ -1219,7 +1219,7 @@ void printInfoUsuario(WINDOW *win)
 	wmove(win, 6, 2);
 	waddstr(win, statusc);
 
-	string uid = "Status: " + to_string(user.userId);
+	string uid = "User id: " + to_string(user.userId);
 	char uidc[uid.size() + 1];
 	strcpy(uidc, uid.c_str());
 	wmove(win, 8, 2);
