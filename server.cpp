@@ -485,10 +485,21 @@ void sendingMessage(int indexConn, ClientMessage message2, ActiveConnection attr
         char wBuffer[binary.size() + 1];
         strcpy(wBuffer, binary.c_str());
 
-        // Send DM to all connected clients
-        int userTo = 10 - message2.directmessage().userid();
-        int socketTo = connectedClients[userTo].sockId;
-        send(socketTo , wBuffer , strlen(wBuffer) , 0 );
+        // Send DM to connected client
+        if (1 <= message2.directmessage().userid() && message2.directmessage().userid() <= 10)
+        {
+            int userTo = 10 - message2.directmessage().userid();
+            int socketTo = connectedClients[userTo].sockId;
+            send(socketTo , wBuffer , strlen(wBuffer) , 0 );
+        }
+        else
+        {
+            for(int j = 0; j < MAX_CONNECTED_CLIENTS; j++) {
+                if(connectedClients[j].userNames == message2.directmessage().username()) {
+                    send(connectedClients[j].sockId , wBuffer , strlen(wBuffer) , 0 );
+                }
+            }
+        }
 
         cout << "Direct Message sent to: " << message2.directmessage().userid() << endl;
     }
