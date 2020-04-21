@@ -499,13 +499,13 @@ void sendingMessage(int indexConn, ClientMessage message2, ActiveConnection attr
         strcpy(wBuffer, binary.c_str());
 
         // Send DM to connected client
-        if (1 <= message2.directmessage().userid() && message2.directmessage().userid() <= 10)
+        if (1 <= message2.directmessage().userid() && message2.directmessage().userid() <= 10 || !message2.directmessage().has_username())
         {
             int userTo = 10 - message2.directmessage().userid();
             int socketTo = connectedClients[userTo].sockId;
             send(socketTo , wBuffer , strlen(wBuffer) , 0 );
         }
-        else
+        else if (message2.directmessage().has_username())
         {
             for(int j = 0; j < MAX_CONNECTED_CLIENTS; j++) {
                 if(connectedClients[j].userNames == message2.directmessage().username()) {
